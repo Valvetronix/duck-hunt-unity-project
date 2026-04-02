@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!221 &22100000
+AnimatorOverrideController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: AOC_Duck_Blue
+  m_Controller: {fileID: 9100000, guid: 5e35594b518620f469a709853099329c, type: 2}
+  m_Clips:
+  - m_OriginalClip: {fileID: 7400000, guid: 74cbbef96c52cbd46917392696aab3a2, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 8615ea8cf32c90d48b4026c3d782b76e, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: d037a295f1fa3964a923c016a08331d6, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 6e8582b86e8a89d4dbd374db2a821de2, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: fb0e59653db082948815d113e57f511b, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: be61ed897468142429a9fc84d93c2d87, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: e2cb7ff6e0e2b0d45996a6323f95fade, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 6f7e708410dde7f45a1b7a80853534b9, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: d9cce64a226c49c48a9acc1dcd21dcf9, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 8fcc7d201c887c04981fb6560bf693d4, type: 2}
