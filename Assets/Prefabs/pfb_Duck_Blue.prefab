@@ -50,15 +50,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1489874786290228129, guid: 0a935ebf5f7f57f429526f74369bc2d1, type: 3}
       propertyPath: m_ConstrainProportionsScale
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1803618165856767706, guid: 0a935ebf5f7f57f429526f74369bc2d1, type: 3}
       propertyPath: speed
-      value: 1
+      value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: 1803618165856767706, guid: 0a935ebf5f7f57f429526f74369bc2d1, type: 3}
       propertyPath: scoreValue
+      value: 1000
+      objectReference: {fileID: 0}
+    - target: {fileID: 1803618165856767706, guid: 0a935ebf5f7f57f429526f74369bc2d1, type: 3}
+      propertyPath: directionChangeInterval
       value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3682016467106788362, guid: 0a935ebf5f7f57f429526f74369bc2d1, type: 3}
+      propertyPath: m_Size.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3682016467106788362, guid: 0a935ebf5f7f57f429526f74369bc2d1, type: 3}
+      propertyPath: m_Size.y
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3682016467106788362, guid: 0a935ebf5f7f57f429526f74369bc2d1, type: 3}
       propertyPath: m_SpriteTilingProperty.pivot.x
@@ -78,11 +90,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3682016467106788362, guid: 0a935ebf5f7f57f429526f74369bc2d1, type: 3}
       propertyPath: m_SpriteTilingProperty.oldSize.x
-      value: 0.36
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3682016467106788362, guid: 0a935ebf5f7f57f429526f74369bc2d1, type: 3}
       propertyPath: m_SpriteTilingProperty.oldSize.y
-      value: 0.36
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3682016467106788362, guid: 0a935ebf5f7f57f429526f74369bc2d1, type: 3}
       propertyPath: m_SpriteTilingProperty.adaptiveTilingThreshold

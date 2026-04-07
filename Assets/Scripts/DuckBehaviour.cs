@@ -1,10 +1,13 @@
 using UnityEngine;
-using UnityEngine.U2D;
+using UnityEngine.UIElements;
+using static UnityEngine.Rendering.DebugUI;
+
 
 public class DuckBehaviour : MonoBehaviour
 {
     public enum DuckState { Flying, Shocked, Falling }  // Creo un enum para los tres estados que va a tener el Patito
     public enum DirectionType { Horizontal, Diagonal, Vertical }    // Otro enum para las animaciones
+
 
     private const float MIN_ANGLE = 30f;
     private const float MAX_ANGLE = 150f;
@@ -17,18 +20,32 @@ public class DuckBehaviour : MonoBehaviour
 
     private DuckState currentState;
     private DirectionType currentAnimDirection;
-    
 
     private Rigidbody2D rb;
     private Animator anim;
     private SpriteRenderer sprite;
+    private AudioSource audioSource;
+    private BoxCollider2D hitbox;
 
     private Vector2 direction;
+    private float nextDirectionChangeTime;
 
+    //public static event Action<DuckBehaviour, int> OnDuckHitGround; // Señal de que el pato cayo al suelo (activa -> animación del perro)
 
-    [Header("DUCK STATS")]  // Forma copada y prolija para visualizar los parámetros modificables en el inspector
+    [Header("Duck Stats")]  // Forma copada y prolija para visualizar los parámetros modificables en el inspector
     [SerializeField] private float speed;
     [SerializeField] private int scoreValue;
+    [SerializeField] private float directionChangeInterval = 2f;
+
+    [Header("Audio")]
+    [SerializeField] private AudioClip flapSound;
+    [SerializeField] private AudioClip fallSound;
+
+    [Header("Boundaries")]
+    [SerializeField] private float minX;
+    [SerializeField] private float maxX;
+    [SerializeField] private float minY;
+    [SerializeField] private float maxY;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -37,13 +54,18 @@ public class DuckBehaviour : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
         sprite = GetComponent<SpriteRenderer>();
+        audioSource = GetComponent<AudioSource>();
+        hitbox = GetComponent<BoxCollider2D>();
 
         // Seteo el estado inicial (volar)
         ChangeState(DuckState.Flying);
 
         // Seteo una dirección mediante una función personalizada
-        direction = GetRandomDirection();
+        SetNewRandomDirection(MIN_ANGLE, MAX_ANGLE);
+        SetNextDirectionChangeTime();
     }
+
+
 
     // Update is called once per frame
     void FixedUpdate()
@@ -52,6 +74,9 @@ public class DuckBehaviour : MonoBehaviour
         {
             case DuckState.Flying:
                 rb.linearVelocity = direction * speed;
+                CheckBoundaries();
+                HandleRandomDirectionChange();
+                //rb.AddForce(direction * speed); No utilizo AddForce ya que en el juego clásico el pato tiene una velocidad constante.
                 break;
             case DuckState.Shocked:
                 break;
@@ -74,7 +99,7 @@ public class DuckBehaviour : MonoBehaviour
 
     // Controlador de Estados
     // Acá realizo los cambios de estado y las acciones que solo necesitan ejecutarse una única vez y no una vez por frame (como en FixedUpdate())
-    public void ChangeState(DuckState newState)
+    private void ChangeState(DuckState newState)
     {
         currentState = newState;
         print("Cambio de estado a: " + newState);
@@ -88,7 +113,8 @@ public class DuckBehaviour : MonoBehaviour
             case DuckState.Shocked:
                 // Frenamos el pato
                 rb.linearVelocity = Vector2.zero;
-                // aca se activa el triggerr anim.SetTrigger("shot");
+                anim.SetTrigger("shot");
+                Invoke(nameof(ShockedAnimationEnded), 0.5f);
                 break;
             case DuckState.Falling:
                 // le damos gravedad para que caiga
@@ -97,11 +123,12 @@ public class DuckBehaviour : MonoBehaviour
         }
     }
 
-    // Función que devuelve un Vector2 (una dirección)
-    Vector2 GetRandomDirection()
+
+    // Función que setea una nueva dirección aleatoria
+    private void SetNewRandomDirection(float minDegree, float maxDegree)
     {
-        // Creo de manera random un ángulo entre 30° y 150°
-        float randomAngleDegrees = Random.Range(MIN_ANGLE, MAX_ANGLE);
+        // Creo de manera random un ángulo entre los angulos que pasemos como parametro
+        float randomAngleDegrees = Random.Range(minDegree, maxDegree);
 
         // Seteo la animación correspondiente al angulo obtenido
         SetCurrentAnimation(randomAngleDegrees);
@@ -113,13 +140,12 @@ public class DuckBehaviour : MonoBehaviour
         float x = Mathf.Cos(randomAngleRadians);
         float y = Mathf.Sin(randomAngleRadians);
 
-        
-        // Finalizo la función retornando la dirección randomm
-        return new Vector2(x, y);
+        // Asigno la dirección calculada
+        direction = new Vector2(x, y);
     }
 
-    // Seteo la animación de acuerdo al ángulo/dirección
-    void SetCurrentAnimation(float angle)
+    // Seteo la animación de acuerdo al ángulo o dirección
+    private void SetCurrentAnimation(float angle)
     {
         if (angle > MIN_VERTICAL_ANGLE && angle < MAX_VERTICAL_ANGLE)
         {
@@ -136,5 +162,82 @@ public class DuckBehaviour : MonoBehaviour
         }
 
         anim.SetFloat("directionType", (float)currentAnimDirection);
+    }
+
+
+    // Chequea que el pato no se vaya de la pantalla e invierte su dirección
+    private void CheckBoundaries()
+    {
+        bool didBounce = false;
+
+        // Chequeo Horizontal
+        if (rb.position.x >= maxX && direction.x > 0|| rb.position.x <= minX && direction.x < 0)
+        {
+            direction.x *= -1;
+
+            // Fuerzo / clampeo la posición en X por si debido a la velocidad del pato se pasa del limite.
+            float clampedX = Mathf.Clamp(rb.position.x, minX, maxX);
+            rb.position = new Vector2(clampedX, rb.position.y);
+
+            didBounce = true;
+        }
+
+        // Chequeo Vertical
+        if (rb.position.y >= maxY && direction.y > 0 || rb.position.y <= minY && direction.y < 0)
+        {
+            direction.y *= -1;
+
+            // Clampeo en Y
+            float clampedY = Mathf.Clamp(rb.position.y, minY, maxY);
+            rb.position = new Vector2(rb.position.x, clampedY);
+
+            didBounce = true;
+        }
+
+        // Si hubo rebote cambio la animación
+        if (didBounce)
+        {
+            // Atan2 convierte un vector en un ángulo en radianes.
+            // Lo multiplico por Rad2Deg para pasarlo a grados.
+            float currentAngleDegrees = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+
+            // Como Atan2 devuelve valores de -180 a 180. Lo paso a 0-360° sumandole 360°
+            if (currentAngleDegrees < 0)
+            {
+                currentAngleDegrees += 360f;
+            }
+
+            SetCurrentAnimation(currentAngleDegrees);
+        }
+    }
+
+    private void HandleRandomDirectionChange()
+    {
+        if (Time.time >= nextDirectionChangeTime)
+        {
+            SetNewRandomDirection(0, 360);
+            SetNextDirectionChangeTime();
+        }
+    }
+
+    private void SetNextDirectionChangeTime()
+    {
+        nextDirectionChangeTime = Time.time + directionChangeInterval;
+    }
+
+    public void TakeHit()
+    {
+        if (currentState == DuckState.Flying)
+        {
+            ChangeState(DuckState.Shocked);
+        } 
+    }
+
+    public void ShockedAnimationEnded()
+    {
+        if (currentState == DuckState.Shocked)
+        {
+            ChangeState(DuckState.Falling);
+        }
     }
 }
