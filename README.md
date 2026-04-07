@@ -1,4 +1,4 @@
-# 🦆 Duck Hunt (Custom Edition) - Unity 6
+# 🦆 Duck Hunt - Unity 6
 
 > **Proyecto Académico - Materia: Motores Avanzados** > *Tecnicatura en Desarrollo de Videojuegos (UNLaM)*
 
