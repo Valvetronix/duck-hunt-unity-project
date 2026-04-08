@@ -5,10 +5,18 @@ public class PlayerGun : MonoBehaviour
 {
     private Camera mainCamera;
 
+    [Header("Audio Sources")]
+    [SerializeField] private AudioSource gunAudioSource;
+
+    [Header("Audio Clips")]
+    [SerializeField] private AudioClip shotSound;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         mainCamera = Camera.main;
+        gunAudioSource.clip = shotSound;
+        gunAudioSource.loop = false;
     }
 
     // Update is called once per frame
@@ -16,7 +24,7 @@ public class PlayerGun : MonoBehaviour
     {
         if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
         {
-            print("bang!"); // Reemplazar por SFX
+            gunAudioSource.Play(); // Reemplazar por SFX
             Vector2 mouseScreenPosition = Mouse.current.position.ReadValue();
             Vector2 mouseWorldPosition = mainCamera.ScreenToWorldPoint(mouseScreenPosition);
 

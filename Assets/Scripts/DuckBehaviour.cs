@@ -1,13 +1,16 @@
 using UnityEngine;
-using UnityEngine.UIElements;
-using static UnityEngine.Rendering.DebugUI;
+using System;
+using Random = UnityEngine.Random;
 
-
+[RequireComponent(typeof(Rigidbody2D))]
+[RequireComponent(typeof(Animator))]
+[RequireComponent(typeof(SpriteRenderer))]
+[RequireComponent(typeof(DuckAudioHandler))]
 public class DuckBehaviour : MonoBehaviour
 {
+    [HideInInspector] public DuckBehaviour originalPrefab;
     public enum DuckState { Flying, Shocked, Falling }  // Creo un enum para los tres estados que va a tener el Patito
     public enum DirectionType { Horizontal, Diagonal, Vertical }    // Otro enum para las animaciones
-
 
     private const float MIN_ANGLE = 30f;
     private const float MAX_ANGLE = 150f;
@@ -24,22 +27,19 @@ public class DuckBehaviour : MonoBehaviour
     private Rigidbody2D rb;
     private Animator anim;
     private SpriteRenderer sprite;
-    private AudioSource audioSource;
-    private BoxCollider2D hitbox;
+    private DuckAudioHandler duckAudioHandler;
 
     private Vector2 direction;
     private float nextDirectionChangeTime;
 
-    //public static event Action<DuckBehaviour, int> OnDuckHitGround; // Señal de que el pato cayo al suelo (activa -> animación del perro)
+    // EVENTOS / SEÑALES
+    public static event Action<int, Vector2> OnDuckKilled; // Pasa el valor del scoreValue y su posición.
+    public static event Action<DuckBehaviour> OnDuckFinished; // Se dispara cuando el patito cae al piso. Se pasa a si mismo como referencia.
 
-    [Header("Duck Stats")]  // Forma copada y prolija para visualizar los parámetros modificables en el inspector
+    [Header("Duck Stats")]  // Forma copada y prolija para visualizar los parámetros modificables en el inspector y mantenerlos privados
     [SerializeField] private float speed;
     [SerializeField] private int scoreValue;
     [SerializeField] private float directionChangeInterval = 2f;
-
-    [Header("Audio")]
-    [SerializeField] private AudioClip flapSound;
-    [SerializeField] private AudioClip fallSound;
 
     [Header("Boundaries")]
     [SerializeField] private float minX;
@@ -47,25 +47,28 @@ public class DuckBehaviour : MonoBehaviour
     [SerializeField] private float minY;
     [SerializeField] private float maxY;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    // Awake se llama al instanciar el objeto.
+    void Awake()
     {
-        // Inicializo los componentes
+        // Awake se llama al instanciar el objeto. 
+        // Ideal para cachear componentes de forma segura.
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
         sprite = GetComponent<SpriteRenderer>();
-        audioSource = GetComponent<AudioSource>();
-        hitbox = GetComponent<BoxCollider2D>();
-
-        // Seteo el estado inicial (volar)
-        ChangeState(DuckState.Flying);
-
-        // Seteo una dirección mediante una función personalizada
-        SetNewRandomDirection(MIN_ANGLE, MAX_ANGLE);
-        SetNextDirectionChangeTime();
+        duckAudioHandler = GetComponent<DuckAudioHandler>();
     }
 
+    // 
+    public void Spawn(Vector2 startPosition)
+    {
+        // Reseteo sus valores
+        rb.position = startPosition;
+        rb.linearVelocity = Vector2.zero;
+        rb.gravityScale = 0f;
 
+        // Inicio con el estado de volar
+        ChangeState(DuckState.Flying);
+    }
 
     // Update is called once per frame
     void FixedUpdate()
@@ -81,6 +84,7 @@ public class DuckBehaviour : MonoBehaviour
             case DuckState.Shocked:
                 break;
             case DuckState.Falling:
+                CheckGround();
                 break;
         }
     }
@@ -109,20 +113,86 @@ public class DuckBehaviour : MonoBehaviour
         {
             case DuckState.Flying:
                 // Setup de vuelo (ya está manejado en Start por ahora)
+                EnterFlyingState();
                 break;
             case DuckState.Shocked:
                 // Frenamos el pato
-                rb.linearVelocity = Vector2.zero;
-                anim.SetTrigger("shot");
-                Invoke(nameof(ShockedAnimationEnded), 0.5f);
+                EnterShockedState();
+
                 break;
             case DuckState.Falling:
                 // le damos gravedad para que caiga
-                rb.gravityScale = 1f;
+                EnterFallingState();
                 break;
         }
     }
 
+    private void EnterFallingState()
+    {
+        // Le doy gravedad para que caiga.
+        rb.gravityScale = 1f;
+
+        // Le doy play al audio de caída
+        duckAudioHandler.StartFallingAudio();
+
+    }
+
+    private void EnterFlyingState()
+    {
+        // Seteo una dirección mediante una función personalizada
+        SetNewRandomDirection(MIN_ANGLE, MAX_ANGLE);
+
+        // Seteo el timer para el proximo cambio de dirección
+        SetNextDirectionChangeTime();
+
+        // Coloco el sonido de flapping
+        duckAudioHandler.StartFlyingAudio();
+    }
+
+    private void EnterShockedState()
+    {
+        // Freno al pato
+        rb.linearVelocity = Vector2.zero;
+        // Triggereo el shot del animator
+        anim.SetTrigger("shot");
+        // Invoco la funcion que cambia al estado Falling en 0.5 segundos
+        Invoke(nameof(ShockedAnimationEnded), 0.5f);
+
+        // Freno el audio
+        duckAudioHandler.StopAudio();
+    }
+    public void TakeHit()
+    {
+        if (currentState == DuckState.Flying)
+        {
+            ChangeState(DuckState.Shocked);
+
+            // (el '?' verifica si hay alguien escuchando)
+            OnDuckKilled?.Invoke(scoreValue, rb.position);
+        }
+    }
+
+    public void CheckGround()
+    {
+        if (rb.position.y <= minX)
+        {
+            HitTheGround();
+        }
+    }
+    public void HitTheGround()
+    {
+        // En lugar de destruir al pato, implemente un Pool de Patos
+        // Le aviso al pool que se termino de caer
+        OnDuckFinished?.Invoke(this);
+    }
+
+    public void ShockedAnimationEnded()
+    {
+        if (currentState == DuckState.Shocked)
+        {
+            ChangeState(DuckState.Falling);
+        }
+    }
 
     // Función que setea una nueva dirección aleatoria
     private void SetNewRandomDirection(float minDegree, float maxDegree)
@@ -223,21 +293,5 @@ public class DuckBehaviour : MonoBehaviour
     private void SetNextDirectionChangeTime()
     {
         nextDirectionChangeTime = Time.time + directionChangeInterval;
-    }
-
-    public void TakeHit()
-    {
-        if (currentState == DuckState.Flying)
-        {
-            ChangeState(DuckState.Shocked);
-        } 
-    }
-
-    public void ShockedAnimationEnded()
-    {
-        if (currentState == DuckState.Shocked)
-        {
-            ChangeState(DuckState.Falling);
-        }
     }
 }
