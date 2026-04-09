@@ -1,2 +1,12 @@
-AssetsTextMesh Pro linguist-vendored
-AssetsPlugins linguist-vendored
+
+"Assets/TextMesh Pro/**" linguist-vendored
+"Assets/Plugins/**" linguist-vendored
+
+
+*.shader linguist-vendored
+*.hlsl linguist-vendored
+*.cginc linguist-vendored
+*.cg linguist-vendored
+
+
+*.meta linguist-documentation
