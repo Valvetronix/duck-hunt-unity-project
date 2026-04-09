@@ -17,12 +17,14 @@ Trate de darle mucho cariño a la arquitectura aplicando principios **SOLID**. A
 * **Máquina de Estados (FSM):** El comportamiento de los patos está segmentado en estados (`Flying`, `Shocked`, `Falling`). Cada estado maneja su propia física y animación.
 * **Game Manager & Game Loop:** Maneja las rondas, la cantidad de patos por nivel y elige *spawn points* aleatorios.
 * **Gestor de Audio Dedicado (`DuckAudioHandler`):** Separé el sonido de la lógica de movimiento. Los patos tienen canales de audio independientes (para el aleteo y los "cuacks").
+* **Data-Driven Rounds:** Utilice `ScriptableObjects` para definir cada ronda. Esto permite cambiar la secuencia de patos o la dificultad sin tocar el código.
 
 ## Próximos Pasos (Roadmap)
 
 - [x] Spawneo dinámico de patos, Object Pooling.
-- [ ] Sistema de Rondas
-- [ ] Implementar mecánica de "Fly Away" (cuando escapan).
+- [x] Sistema de Rondas (con ScriptableObjects)
+- [x] Implementar mecánica de "Escape".
+- [x] Gestión de munición.
 - [ ] Controlador y animaciones del Perro cazador.
 - [ ] HUD general (Contador de balas y UI principal).
 - [ ] Integración de assets propios y pulido general.
@@ -30,3 +32,5 @@ Trate de darle mucho cariño a la arquitectura aplicando principios **SOLID**. A
 ## Tecnologías
 * **Motor:** Unity 6
 * **Lenguaje:** C#
+
+**Desarrollado por:** Juan Ignacio Battelli

@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ad0091a2bf39aa47a883f20d0c2ae5c, type: 3}
+  m_Name: Round_03
+  m_EditorClassIdentifier: Assembly-CSharp::RoundConfiguration
+  roundID: 0
+  duckSequence:
+  - {fileID: 1803618165856767706, guid: 0a935ebf5f7f57f429526f74369bc2d1, type: 3}
+  - {fileID: 7497759881317873885, guid: e2a31fd325b6adf4fa937bbee982c942, type: 3}
+  - {fileID: 5243278817120046727, guid: ba81b4e4e194107479add60fb890e744, type: 3}
+  - {fileID: 5243278817120046727, guid: ba81b4e4e194107479add60fb890e744, type: 3}
+  - {fileID: 7497759881317873885, guid: e2a31fd325b6adf4fa937bbee982c942, type: 3}
+  - {fileID: 1803618165856767706, guid: 0a935ebf5f7f57f429526f74369bc2d1, type: 3}
+  - {fileID: 1803618165856767706, guid: 0a935ebf5f7f57f429526f74369bc2d1, type: 3}
+  - {fileID: 7497759881317873885, guid: e2a31fd325b6adf4fa937bbee982c942, type: 3}
+  - {fileID: 5243278817120046727, guid: ba81b4e4e194107479add60fb890e744, type: 3}
+  - {fileID: 7497759881317873885, guid: e2a31fd325b6adf4fa937bbee982c942, type: 3}
+  speedMultiplier: 1.3
+  escapeTime: 8

@@ -1,5 +1,7 @@
-using UnityEngine;
+// Desarrollado por Juan Ignacio Battelli
 using System;
+using UnityEngine;
+using UnityEngine.EventSystems;
 using Random = UnityEngine.Random;
 
 [RequireComponent(typeof(Rigidbody2D))]
@@ -9,7 +11,7 @@ using Random = UnityEngine.Random;
 public class DuckBehaviour : MonoBehaviour
 {
     [HideInInspector] public DuckBehaviour originalPrefab;
-    public enum DuckState { Flying, Shocked, Falling }  // Creo un enum para los tres estados que va a tener el Patito
+    public enum DuckState { Flying, Shocked, Falling, Escaping }  // Creo un enum para los tres estados que va a tener el Patito / *Edited: sume Escaping para la secuencia de escape.
     public enum DirectionType { Horizontal, Diagonal, Vertical }    // Otro enum para las animaciones
 
     private const float MIN_ANGLE = 30f;
@@ -29,17 +31,24 @@ public class DuckBehaviour : MonoBehaviour
     private SpriteRenderer sprite;
     private DuckAudioHandler duckAudioHandler;
 
+
     private Vector2 direction;
     private float nextDirectionChangeTime;
 
+    private float currentEscapeTimer;
+
     // EVENTOS / SEÑALES
     public static event Action<int, Vector2> OnDuckKilled; // Pasa el valor del scoreValue y su posición.
-    public static event Action<DuckBehaviour> OnDuckFinished; // Se dispara cuando el patito cae al piso. Se pasa a si mismo como referencia.
+    public static event Action<DuckBehaviour> OnDuckFall; // Se dispara cuando el patito cae al piso. Se pasa a si mismo como referencia.
+    public static event Action<DuckBehaviour> OnDuckEscaped; // Se dispara cuando el pato escapa.
+    public static event Action OnDuckUnavailable; // Evento para el arma sin parametros
+    public static event Action<DuckBehaviour> OnDuckFinished; // Avisa al pool que el pato termino haya escapado o muerto.
 
     [Header("Duck Stats")]  // Forma copada y prolija para visualizar los parámetros modificables en el inspector y mantenerlos privados
-    [SerializeField] private float speed;
+    [SerializeField] public float speed; // La dejo publica para que sea modificable por las rondas (Scriptable Object)
     [SerializeField] private int scoreValue;
     [SerializeField] private float directionChangeInterval = 2f;
+    [SerializeField] public float timeToEscape = 10f;
 
     [Header("Boundaries")]
     [SerializeField] private float minX;
@@ -66,6 +75,9 @@ public class DuckBehaviour : MonoBehaviour
         rb.linearVelocity = Vector2.zero;
         rb.gravityScale = 0f;
 
+        // Inicio el timer de escape
+        currentEscapeTimer = Time.time + timeToEscape;
+
         // Inicio con el estado de volar
         ChangeState(DuckState.Flying);
     }
@@ -80,15 +92,26 @@ public class DuckBehaviour : MonoBehaviour
                 CheckBoundaries();
                 HandleRandomDirectionChange();
                 //rb.AddForce(direction * speed); No utilizo AddForce ya que en el juego clásico el pato tiene una velocidad constante.
+                if (Time.time >= currentEscapeTimer)
+                {
+                    ChangeState(DuckState.Escaping);
+                }
                 break;
             case DuckState.Shocked:
                 break;
             case DuckState.Falling:
                 CheckGround();
                 break;
+            case DuckState.Escaping:
+                rb.linearVelocity = Vector2.up * speed; // Vuela directo hacia arriba
+                                                        // Si cruza el límite superior (con un pequeño margen), lo devolvemos al pool
+                if (rb.position.y > maxY + 1f)
+                {
+                    Escape(); // Usamos esta función que ya dispara OnDuckFinished
+                }
+                break;
         }
     }
-
 
     // Por alguna razón no hacía el flip seteandolo desde Start o FixedUpdate()
     // Creo que es porque el animator sobreescribe el flipX del sprite component
@@ -99,6 +122,15 @@ public class DuckBehaviour : MonoBehaviour
         {
             sprite.flipX = (direction.x < 0);
         }
+    }
+    private void OnEnable()
+    {
+        PlayerGun.OnAmmoEmpty += ForceEscape; // Si se acaban las balas escapa
+    }
+
+    private void OnDisable()
+    {
+        PlayerGun.OnAmmoEmpty -= ForceEscape;
     }
 
     // Controlador de Estados
@@ -124,7 +156,16 @@ public class DuckBehaviour : MonoBehaviour
                 // le damos gravedad para que caiga
                 EnterFallingState();
                 break;
+            case DuckState.Escaping:
+                EnterEscapingState();
+                break;
         }
+    }
+
+    private void EnterEscapingState()
+    {
+        direction = Vector2.up;
+        SetCurrentAnimation(90f);
     }
 
     private void EnterFallingState()
@@ -169,21 +210,39 @@ public class DuckBehaviour : MonoBehaviour
 
             // (el '?' verifica si hay alguien escuchando)
             OnDuckKilled?.Invoke(scoreValue, rb.position);
+            OnDuckUnavailable?.Invoke();
         }
     }
 
     public void CheckGround()
     {
-        if (rb.position.y <= minX)
+        if (rb.position.y <= minY)
         {
             HitTheGround();
         }
     }
+
     public void HitTheGround()
     {
         // En lugar de destruir al pato, implemente un Pool de Patos
         // Le aviso al pool que se termino de caer
         OnDuckFinished?.Invoke(this);
+        OnDuckFall?.Invoke(this);
+    }
+
+    private void Escape()
+    {
+        OnDuckFinished?.Invoke(this);
+        OnDuckEscaped?.Invoke(this);
+        OnDuckUnavailable?.Invoke();
+    }
+
+    private void ForceEscape()
+    {
+        if (currentState == DuckState.Flying)
+        {
+            ChangeState(DuckState.Escaping);
+        }
     }
 
     public void ShockedAnimationEnded()
