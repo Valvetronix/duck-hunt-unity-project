@@ -5,9 +5,6 @@ using UnityEngine.InputSystem;
 
 public class PlayerGun : MonoBehaviour
 {
-    // Eventos
-    public static event Action<int> OnAmmoChanged;
-    public static event Action OnAmmoEmpty;
 
     [Header("Audio Sources")]
     [SerializeField] private AudioSource gunAudioSource;
@@ -58,8 +55,10 @@ public class PlayerGun : MonoBehaviour
     void Shoot()
     {
         currentAmmo--;
+
         gunAudioSource.Play();
-        OnAmmoChanged?.Invoke(currentAmmo);
+        //OnAmmoChanged?.Invoke(currentAmmo);
+        GameEvents.OnAmmoChanged?.Invoke(currentAmmo);
 
         Vector2 mouseScreenPosition = Mouse.current.position.ReadValue();
         Vector2 mouseWorldPosition = mainCamera.ScreenToWorldPoint(mouseScreenPosition);
@@ -75,7 +74,7 @@ public class PlayerGun : MonoBehaviour
 
         if (currentAmmo <= 0)
         {
-            OnAmmoEmpty?.Invoke();
+            GameEvents.OnAmmoEmpty?.Invoke();
         }
     }
 
@@ -83,7 +82,7 @@ public class PlayerGun : MonoBehaviour
     {
         isLocked = false;
         currentAmmo = maxAmmo;
-        OnAmmoChanged?.Invoke(currentAmmo);
+        GameEvents.OnAmmoChanged?.Invoke(currentAmmo);
     }
 
     private void LockGun()

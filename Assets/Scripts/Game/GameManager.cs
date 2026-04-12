@@ -1,4 +1,5 @@
 // Desarrollado por Juan Ignacio Battelli
+using DuckHunt.Global;
 using System;
 using System.Collections;
 using UnityEngine;
@@ -31,10 +32,16 @@ public class GameManager : MonoBehaviour
     public int roundNumber;
 
     public int ducksPerRound = 10;
-    private int ducksSpawnedThisRound = 0;
+    //private int ducksSpawnedThisRound = 0;
 
     private int currentRoundIndex = 0;
     private int duckInRoundIndex = 0;
+
+    private void Awake()
+    {
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 30;
+    }
 
     void Start()
     {
@@ -61,7 +68,10 @@ public class GameManager : MonoBehaviour
     private IEnumerator RoundRoutine()
     {
         // Inicio / Reseteo el indice de patos a 0
+        GameEvents.OnRoundStarted?.Invoke(currentRoundIndex + 1);
+        UIManager.Instance.ResetHUD();
         duckInRoundIndex = 0;
+
         yield return new WaitForSeconds(START_TIMER);
         Debug.Log("Inicio Ronda: " + (currentRoundIndex + 1));
         SpawnNextDuck();
@@ -86,6 +96,10 @@ public class GameManager : MonoBehaviour
                 duck.timeToEscape = config.escapeTime;
                 int randomIndex = UnityEngine.Random.Range(0, spawnPoints.Length);
                 duck.Spawn(spawnPoints[randomIndex].position);
+
+                // Conexión de eventos para la UI, le aviso que indice de patito se encuentra y el estado.
+                GameEvents.OnUIUpdateRequired?.Invoke(duckInRoundIndex - 1, DuckUIStatus.Current);
+
                 OnNewDuck?.Invoke();
             }
         }
@@ -107,6 +121,8 @@ public class GameManager : MonoBehaviour
 
     private void HandleDuckEscaped(DuckBehaviour behaviour)
     {
+        // Marco al patito como MISSED
+        GameEvents.OnUIUpdateRequired?.Invoke(duckInRoundIndex - 1, DuckUIStatus.Missed);
         StartCoroutine(WaitAndSpawnNextDuck());
     }
 
@@ -124,7 +140,12 @@ public class GameManager : MonoBehaviour
     public void AddScore(int points, Vector2 pos)
     {
         currentScore += points;
-        Debug.Log("Score: " + currentScore);
+
+        // Paso el puntaje al HUD
+        GameEvents.OnScoreChanged?.Invoke(currentScore);
+
+        // Marco al patito cazado rojo.
+        GameEvents.OnUIUpdateRequired?.Invoke(duckInRoundIndex - 1, DuckUIStatus.Hit);
 
         // Instancio el popup con el score donde murio el patito
         if (scorePopupPrefab != null)

@@ -14,6 +14,9 @@ public class DuckBehaviour : MonoBehaviour
     public enum DuckState { Flying, Shocked, Falling, Escaping }  // Creo un enum para los tres estados que va a tener el Patito / *Edited: sume Escaping para la secuencia de escape.
     public enum DirectionType { Horizontal, Diagonal, Vertical }    // Otro enum para las animaciones
 
+    private DuckState currentState;
+    private DirectionType currentAnimDirection;
+
     private const float MIN_ANGLE = 30f;
     private const float MAX_ANGLE = 150f;
 
@@ -23,14 +26,10 @@ public class DuckBehaviour : MonoBehaviour
     private const float MIN_DIAGONAL_ANGLE = 50f;
     private const float MAX_DIAGONAL_ANGLE = 130f;
 
-    private DuckState currentState;
-    private DirectionType currentAnimDirection;
-
     private Rigidbody2D rb;
     private Animator anim;
     private SpriteRenderer sprite;
     private DuckAudioHandler duckAudioHandler;
-
 
     private Vector2 direction;
     private float nextDirectionChangeTime;
@@ -44,7 +43,7 @@ public class DuckBehaviour : MonoBehaviour
     public static event Action OnDuckUnavailable; // Evento para el arma sin parametros
     public static event Action<DuckBehaviour> OnDuckFinished; // Avisa al pool que el pato termino haya escapado o muerto.
 
-    [Header("Duck Stats")]  // Forma copada y prolija para visualizar los parámetros modificables en el inspector y mantenerlos privados
+    [Header("Duck Stats")]  // Forma copada y prolija para visualizar los parámetros modificables en el inspector y mantenerlos privados (o no)
     [SerializeField] public float speed; // La dejo publica para que sea modificable por las rondas (Scriptable Object)
     [SerializeField] private int scoreValue;
     [SerializeField] private float directionChangeInterval = 2f;
@@ -125,12 +124,12 @@ public class DuckBehaviour : MonoBehaviour
     }
     private void OnEnable()
     {
-        PlayerGun.OnAmmoEmpty += ForceEscape; // Si se acaban las balas escapa
+        GameEvents.OnAmmoEmpty += ForceEscape; // Si se acaban las balas escapa
     }
 
     private void OnDisable()
     {
-        PlayerGun.OnAmmoEmpty -= ForceEscape;
+        GameEvents.OnAmmoEmpty -= ForceEscape;
     }
 
     // Controlador de Estados
