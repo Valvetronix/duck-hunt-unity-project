@@ -71,19 +71,17 @@ public class UIManager : MonoBehaviour
         {
             elapsed += Time.deltaTime;
 
-            // Calculamos el progreso (de 0 a 1)
+            // Calculo el progreso (de 0 a 1)
             float progress = elapsed / countDuration;
 
             // Interpolación entre el score anteriory el nuevo
             currentDisplayedScore = (int)Mathf.Lerp(startScore, targetScore, progress);
 
-            // Actualizamos el texto con el formato que ya tenías
             scoreText.text = currentDisplayedScore.ToString("D6");
 
-            yield return null; // Esperamos al próximo frame
+            yield return null;
         }
 
-        // 3. Al final, nos aseguramos de que quede exactamente en el target
         currentDisplayedScore = targetScore;
         scoreText.text = currentDisplayedScore.ToString("D6");
         scoreCoroutine = null;
