@@ -18,6 +18,9 @@ Trate de darle mucho cariño a la arquitectura aplicando principios **SOLID**. A
 * **Game Manager & Game Loop:** Maneja las rondas, la cantidad de patos por nivel y elige *spawn points* aleatorios.
 * **Gestor de Audio Dedicado (`DuckAudioHandler`):** Separé el sonido de la lógica de movimiento. Los patos tienen canales de audio independientes (para el aleteo y los "cuacks").
 * **Data-Driven Rounds:** Utilice `ScriptableObjects` para definir cada ronda. Esto permite cambiar la secuencia de patos o la dificultad sin tocar el código.
+* **Eventos Globales:** Extendí el uso del patrón Observer mediante una clase estática de eventos (GameEvents). Esto permite que el sistema de munición, puntaje y rondas se actualice sin que el GameManager tenga referencias directas a los componentes de UI.
+* **Arquitectura de UI Modular:** Implementé un UIManager centralizado (`Singleton`) que orquesta sub-controladores especializados (HitBarUI, AmmoUI). Cada componente tiene una única responsabilidad.
+
 
 ## Próximos Pasos (Roadmap)
 
@@ -26,7 +29,7 @@ Trate de darle mucho cariño a la arquitectura aplicando principios **SOLID**. A
 - [x] Implementar mecánica de "Escape".
 - [x] Gestión de munición.
 - [ ] Controlador y animaciones del Perro cazador.
-- [ ] HUD general (Contador de balas y UI principal).
+- [x] HUD general (Contador de balas y UI principal).
 - [ ] Integración de assets propios y pulido general.
 
 ## Tecnologías

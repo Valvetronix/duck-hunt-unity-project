@@ -1515,6 +1515,7 @@ MonoBehaviour:
   ammoUI: {fileID: 1529674987}
   scoreText: {fileID: 375499063}
   roundText: {fileID: 621210644}
+  countDuration: 1
 --- !u!4 &2044333423
 Transform:
   m_ObjectHideFlags: 0

@@ -3,6 +3,7 @@ using UnityEngine;
 using DuckHunt.Global;
 using TMPro;
 using System;
+using System.Collections;
 
 public class UIManager : MonoBehaviour
 {
@@ -13,6 +14,11 @@ public class UIManager : MonoBehaviour
     [Header("Score and Round")]
     [SerializeField] private TextMeshProUGUI scoreText;
     [SerializeField] private TextMeshProUGUI roundText;
+
+    [Header("Score Settings")]
+    [SerializeField] private float countDuration = 1f; // Cuánto tarda la animación
+    private int currentDisplayedScore = 0;
+    private Coroutine scoreCoroutine;
 
     // SINGLETON
     public static UIManager Instance { get; private set; }
@@ -30,6 +36,13 @@ public class UIManager : MonoBehaviour
         GameEvents.OnScoreChanged += UpdateScoreDisplay;
         GameEvents.OnRoundStarted += UpdateRoundDisplay;
     }
+    private void OnDisable()
+    {
+        GameEvents.OnUIUpdateRequired -= hitBar.UpdateDuckStatus;
+        GameEvents.OnAmmoChanged -= ammoUI.UpdateAmmo;
+        GameEvents.OnScoreChanged -= UpdateScoreDisplay;
+        GameEvents.OnRoundStarted -= UpdateRoundDisplay;
+    }
 
     private void UpdateRoundDisplay(int roundNumber)
     {
@@ -39,17 +52,43 @@ public class UIManager : MonoBehaviour
 
     private void UpdateScoreDisplay(int currentScore)
     {
-        // El formato "D6" rellena con ceros a la izquierda (000500)
-        scoreText.text = currentScore.ToString("D6");
+        // 1. Si ya había una animación corriendo, la frenamos para que no peleen
+        if (scoreCoroutine != null)
+        {
+            StopCoroutine(scoreCoroutine);
+        }
+
+        // 2. Iniciamos la nueva animación
+        scoreCoroutine = StartCoroutine(CountScoreRoutine(currentScore));
     }
 
-    private void OnDisable()
+    private IEnumerator CountScoreRoutine(int targetScore)
     {
-        GameEvents.OnUIUpdateRequired -= hitBar.UpdateDuckStatus;
-        GameEvents.OnAmmoChanged -= ammoUI.UpdateAmmo;
-        GameEvents.OnScoreChanged -= UpdateScoreDisplay;
-        GameEvents.OnRoundStarted -= UpdateRoundDisplay;
+        int startScore = currentDisplayedScore;
+        float elapsed = 0f;
+
+        while (elapsed < countDuration)
+        {
+            elapsed += Time.deltaTime;
+
+            // Calculamos el progreso (de 0 a 1)
+            float progress = elapsed / countDuration;
+
+            // Interpolación entre el score anteriory el nuevo
+            currentDisplayedScore = (int)Mathf.Lerp(startScore, targetScore, progress);
+
+            // Actualizamos el texto con el formato que ya tenías
+            scoreText.text = currentDisplayedScore.ToString("D6");
+
+            yield return null; // Esperamos al próximo frame
+        }
+
+        // 3. Al final, nos aseguramos de que quede exactamente en el target
+        currentDisplayedScore = targetScore;
+        scoreText.text = currentDisplayedScore.ToString("D6");
+        scoreCoroutine = null;
     }
+
 
     private void UpdateDuckIcon(int index, DuckUIStatus status)
     {
